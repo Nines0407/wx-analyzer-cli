@@ -70,7 +70,6 @@ wx-analyzer analyze "https://mp.weixin.qq.com/s/xxxx" \
 | `--mode` | `-m` | `base` | 分析模式：`base` / `deep` |
 | `--output` | `-o` | `./output/` | 输出目录 |
 | `--concurrency` | `-c` | `5` | Deep 模式图片并发数 (1-20) |
-| `--no-progress` | — | `false` | 关闭 Rich 进度条 |
 
 输出文件以 `MD5(URL).md` 命名，包含三部分：
 1. AI 生成的全文摘要

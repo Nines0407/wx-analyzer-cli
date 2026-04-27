@@ -49,11 +49,6 @@ def analyze(
         max=20,
         help="Deep 模式下图片并发分析数 (默认 5)",
     ),
-    no_progress: bool = typer.Option(
-        False,
-        "--no-progress",
-        help="关闭 Rich 进度条输出",
-    ),
 ):
     """分析微信公众号文章，生成结构化 Markdown 报告"""
     if mode not in AVAILABLE_MODES:

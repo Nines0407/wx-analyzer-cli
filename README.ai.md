@@ -31,7 +31,7 @@ deps:
 |:---|:---|:---|
 | `app` | `typer.Typer` | 全局 CLI 实例 |
 | `@app.command()` | decorator | 唯一的子命令 `analyze` |
-| `analyze(url, mode, output_dir, concurrency, no_progress)` | sync fn | Typer 命令函数，内部 `asyncio.run(_run())` |
+| `analyze(url, mode, output_dir, concurrency)` | sync fn | Typer 命令函数，内部 `asyncio.run(_run())` |
 
 **执行顺序（不可变）**:
 
@@ -94,6 +94,7 @@ imgs.forEach(img => {
     const ds = img.getAttribute('data-src') || img.getAttribute('data-original');
     if (ds && (!img.src || img.src.startsWith('data:'))) {
         img.src = ds;
+        img.removeAttribute('data-src');
     }
 });
 // 修复 data-background / data-bg → style.backgroundImage
@@ -185,15 +186,15 @@ response = await client.chat.completions.create(
 **速率限制与重试** (`_call_with_retry`):
 
 ```
-attempt 0 → 429 → sleep(2^0 + random(0,1))  → retry
-attempt 1 → 429 → sleep(2^1 + random(0,1))  → retry
-attempt 2 → 429 → sleep(2^2 + random(0,1))  → retry
-attempt 3 → any error → raise
+attempt 0 → 429 → sleep(2^0 + random(0,1)) → retry
+attempt 1 → 429 → sleep(2^1 + random(0,1)) → retry
+attempt 2 → 429 → sleep(2^2 + random(0,1)) → 不再重试, 返回 "⚠️ AI 请求失败"
+非 429   → 按 2^attempt 退避(无 jitter), 最后一次直接 raise
 ```
 
-- 提取 HTTP status code 从 `exc.response.status_code` 或 `exc.status_code`
-- 非 429 错误同样按 `2^attempt` 退避（但不加 jitter）
-- 最终失败返回 `"⚠️ AI 请求失败"`
+- 重试次数 = `Config.max_retries` (默认 3)，即 `range(3)` → 0, 1, 2 共 3 次尝试
+- 提取 HTTP status code: 优先 `exc.response.status_code`，回退 `exc.status_code`
+- 全部重试耗尽后 429 返回 fallback 字符串，非 429 则抛出异常
 
 **并发控制**:
 - `analyze_images()` 使用 `asyncio.gather` 并发启动所有图片分析
