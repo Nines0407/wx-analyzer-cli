@@ -17,7 +17,7 @@
 
 ```bash
 # 1. 克隆仓库
-git clone <repo-url> && cd wx-analyzer-cli
+git clone https://github.com/Nines0407/wx-analyzer-cli.git && cd wx-analyzer-cli
 
 # 2. 安装依赖和项目本身
 pip install -e .
