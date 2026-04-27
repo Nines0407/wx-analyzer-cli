@@ -1,0 +1,23 @@
+[project]
+name = "wx-analyzer-cli"
+version = "0.1.0"
+description = "微信公众号文章分析 CLI 工具 - 响应式抓取 -> 多模态分析 -> 本地 Markdown 存储"
+requires-python = ">=3.10"
+dependencies = [
+    "playwright>=1.40",
+    "html2text>=2024.2",
+    "openai>=1.0",
+    "rich>=13.0",
+    "typer>=0.9",
+    "httpx>=0.25",
+]
+
+[project.scripts]
+wx-analyzer = "main:app"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["core*"]
