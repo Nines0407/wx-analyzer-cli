@@ -34,7 +34,10 @@ class WechatScraper:
         if self._browser is not None:
             return
         self._playwright = await async_playwright().start()
-        self._browser = await self._playwright.chromium.launch(headless=True)
+        self._browser = await self._playwright.chromium.launch(
+            headless=True,
+            args=self._config.playwright_launch_args,
+        )
         self._context = await self._browser.new_context(
             user_agent=self._config.user_agent,
             viewport={"width": 390, "height": 844},

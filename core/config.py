@@ -1,5 +1,18 @@
 import os
-from dataclasses import dataclass
+import platform
+from dataclasses import dataclass, field
+from typing import List
+
+
+def _default_playwright_args() -> List[str]:
+    if platform.system() == "Linux":
+        return [
+            "--no-sandbox",
+            "--disable-gpu",
+            "--disable-dev-shm-usage",
+            "--disable-setuid-sandbox",
+        ]
+    return []
 
 
 @dataclass
@@ -15,6 +28,7 @@ class Config:
         "AppleWebKit/605.1.15 (KHTML, like Gecko) "
         "Version/16.0 Mobile/15E148 Safari/604.1"
     )
+    playwright_launch_args: List[str] = field(default_factory=_default_playwright_args)
 
 
 def load_config() -> Config:

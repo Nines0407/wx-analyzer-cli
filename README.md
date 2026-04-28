@@ -12,6 +12,7 @@
 - **并发控制** — deep 模式下通过 `asyncio.Semaphore` 控制图片分析并发数，默认 5
 - **429 指数退避** — 针对 API 频率限制实现 `2^n + jitter` 重试机制
 - **Rich 终端 UI** — 进度条、状态面板、彩色输出、摘要面板
+- **Linux 原生支持** — 自动检测平台，注入 Chromium headless 所需参数（`--no-sandbox`、`--disable-gpu`、`--disable-dev-shm-usage`），无需手动配置即可在服务器/容器环境运行
 
 ## 安装
 
@@ -24,6 +25,9 @@ pip install -e .
 
 # 3. 安装 Playwright 浏览器
 playwright install chromium
+
+# 4. [Linux] 安装系统依赖 (Chromium 运行所需的 .so 库)
+playwright install-deps chromium
 ```
 
 ## 配置
@@ -83,7 +87,7 @@ wx-analyzer-cli/
 ├── main.py              # Typer CLI 入口，命令路由与生命周期管理
 ├── pyproject.toml        # 项目元数据与依赖声明
 ├── core/
-│   ├── config.py         # 配置管理（环境变量 → Config dataclass）
+│   ├── config.py         # 配置管理（环境变量 → Config dataclass，含 Linux 平台检测）
 │   ├── scraper.py        # Playwright 浏览器自动化与 DOM 抓取
 │   ├── processor.py      # HTML 清洗、Markdown 转换、噪点去除
 │   ├── ai_engine.py      # DeepSeek API 调用（文本 + 视觉）
@@ -99,7 +103,7 @@ wx-analyzer-cli/
     │
     ▼
 WechatScraper.scrape()
-  ├── 启动无头 Chromium（iPhone User-Agent）
+  ├── 启动无头 Chromium（iPhone User-Agent + Linux 适配 args）
   ├── 等待 networkidle + 额外 1.5s 延迟
   ├── 注入 JS 修复 data-src → src
   └── 返回完整 HTML
@@ -135,6 +139,24 @@ ContentProcessor.html_to_markdown()
 Storage.save()
   └── 写入 output/{MD5(URL)}.md
 ```
+
+## Linux 适配
+
+在 Linux 环境下，Chromium headless 模式需要额外的启动参数才能正常运行（尤其在没有桌面环境的服务器或 Docker 容器中）。项目已内置平台自动检测：
+
+| 参数 | 说明 |
+|:---|:---|
+| `--no-sandbox` | 禁用沙箱，root 用户或容器环境必需 |
+| `--disable-gpu` | 禁用 GPU 加速，避免无 GPU 环境下崩溃 |
+| `--disable-dev-shm-usage` | 使用 `/tmp` 替代 `/dev/shm`，解决 Docker 共享内存不足问题 |
+| `--disable-setuid-sandbox` | 禁用 setuid 沙箱，兼容部分 Linux 发行版 |
+
+实现方式：
+- `core/config.py` — `_default_playwright_args()` 通过 `platform.system()` 判断操作系统，Linux 下自动返回上述参数
+- `core/config.py` — `Config` dataclass 新增 `playwright_launch_args` 字段
+- `core/scraper.py` — `_ensure_browser()` 启动 Chromium 时传入 `args=self._config.playwright_launch_args`
+
+在 macOS / Windows 上返回空列表，不影响原生功能。
 
 ## License
 

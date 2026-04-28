@@ -1,11 +1,44 @@
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
+*.egg
 dist/
 build/
-.env
-output/
+*.whl
+
+# Virtual environments
 .venv/
 venv/
+env/
+.env
+
+# Output
+output/
 *.log
+
+# Playwright
 .playwright/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Thumbs.db:encryptable
+
+# Testing & coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Misc
+*.bak
