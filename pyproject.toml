@@ -10,6 +10,7 @@ dependencies = [
     "rich>=13.0",
     "typer>=0.9",
     "httpx>=0.25",
+    "python-dotenv>=1.0",
 ]
 
 [project.scripts]
@@ -21,3 +22,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["core*"]
+
+[tool.setuptools]
+py-modules = ["main"]

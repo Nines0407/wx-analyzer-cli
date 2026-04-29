@@ -32,10 +32,31 @@ playwright install-deps chromium
 
 ## 配置
 
-设置 DeepSeek API 密钥：
+项目**首次运行时会自动**将 `.env.example` 复制为 `.env`，编辑该文件填入 API 密钥即可：
 
 ```bash
-export DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxx
+# 编辑自动生成的 .env 文件
+vim .env
+# 或
+nano .env
+```
+
+`.env` 文件格式：
+
+```ini
+# 必填：DeepSeek API 密钥
+DEEPSEEK_API_KEY=sk-your-key-here
+
+# 以下均为可选，有默认值
+# DEEPSEEK_API_BASE=https://api.deepseek.com/v1
+# DEEPSEEK_TEXT_MODEL=deepseek-v4-flash
+# DEEPSEEK_VISION_MODEL=deepseek-vl2
+```
+
+也可通过环境变量配置（优先级高于 `.env`）：
+
+```bash
+export DEEPSEEK_API_KEY=sk-your-key-here
 ```
 
 可选环境变量（均有合理默认值）：
@@ -43,27 +64,29 @@ export DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxx
 | 变量 | 默认值 | 说明 |
 |:---|:---|:---|
 | `DEEPSEEK_API_BASE` | `https://api.deepseek.com/v1` | API 基础 URL |
-| `DEEPSEEK_TEXT_MODEL` | `deepseekv4flash` | 文本模型 ID |
+| `DEEPSEEK_TEXT_MODEL` | `deepseek-v4-flash` | 文本模型 ID |
 | `DEEPSEEK_VISION_MODEL` | `deepseek-vl2` | 视觉模型 ID |
 
 ## 使用方法
 
+安装后通过 `wx-analyzer` 命令使用，也可在项目根目录直接使用 `python -m main`：
+
 ### 基础模式（仅生成全文摘要）
 
 ```bash
-wx-analyzer analyze "https://mp.weixin.qq.com/s/xxxx"
+wx-analyzer "https://mp.weixin.qq.com/s/xxxx"
 ```
 
 ### 深度模式（摘要 + 图片分析）
 
 ```bash
-wx-analyzer analyze "https://mp.weixin.qq.com/s/xxxx" --mode deep
+wx-analyzer "https://mp.weixin.qq.com/s/xxxx" --mode deep
 ```
 
 ### 自定义参数
 
 ```bash
-wx-analyzer analyze "https://mp.weixin.qq.com/s/xxxx" \
+wx-analyzer "https://mp.weixin.qq.com/s/xxxx" \
     --mode deep \
     --output ./my_analysis/ \
     --concurrency 10

@@ -13,6 +13,7 @@ runtime: Python 3.10+
 entry: main.py  # typer app
 package: core/  # flat namespace, no nested subpackages
 deps:
+  python-dotenv: .env 文件自动加载
   playwright:  动态 DOM 渲染, data-src 懒加载修复
   html2text:   HTML → Markdown 转换
   openai:      AsyncOpenAI, DeepSeek 兼容 OpenAI 协议
@@ -52,14 +53,14 @@ deps:
 class Config:
     api_key: str = ""                                    # DEEPSEEK_API_KEY
     api_base: str = "https://api.deepseek.com/v1"        # DEEPSEEK_API_BASE
-    text_model: str = "deepseekv4flash"                # DEEPSEEK_TEXT_MODEL
+    text_model: str = "deepseek-v4-flash"                # DEEPSEEK_TEXT_MODEL
     vision_model: str = "deepseek-vl2"                    # DEEPSEEK_VISION_MODEL
     max_retries: int = 3                                  # 重试次数
     request_timeout: float = 60.0                         # SDK timeout
     user_agent: str = <Mobile Safari UA>
 ```
 
-`load_config()` 从以下环境变量读取:
+| `load_config()` 从 `.env` 文件及环境变量读取:
 - `DEEPSEEK_API_KEY` (required)
 - `DEEPSEEK_API_BASE` (optional)
 - `DEEPSEEK_TEXT_MODEL` (optional)
@@ -164,7 +165,7 @@ messages = [
     {"role": "user", "content": truncated_markdown[:12000]},
 ]
 response = await client.chat.completions.create(
-    model="deepseekv4flash",  # or DEEPSEEK_TEXT_MODEL
+     model="deepseek-v4-flash",  # or DEEPSEEK_TEXT_MODEL
     messages=messages,
     timeout=60.0,
 )

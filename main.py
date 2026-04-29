@@ -1,8 +1,8 @@
 """wx-analyzer-cli: 微信公众号文章分析工具
 
 使用方法:
-    wx-analyzer analyze <url>                # 基础模式（仅摘要）
-    wx-analyzer analyze <url> --mode deep    # 深度模式（摘要 + 图片分析）
+    wx-analyzer <url>                # 基础模式（仅摘要）
+    wx-analyzer <url> --mode deep    # 深度模式（摘要 + 图片分析）
 """
 
 import asyncio
@@ -136,3 +136,7 @@ def analyze(
     except KeyboardInterrupt:
         console.print("\n[dim]用户中断[/dim]")
         raise typer.Exit(0)
+
+
+if __name__ == "__main__":
+    app()
