@@ -16,16 +16,6 @@ from rich.progress import (
 from core.config import Config
 from core.processor import ImageItem
 
-SYSTEM_SUMMARY_PROMPT = (
-    "你是一个专业的技术文章摘要助手。请用中文对以下微信公众号文章进行摘要，"
-    "突出核心技术要点、关键信息与结论。控制在 300 字以内，以段落形式输出。"
-)
-
-IMAGE_ANALYSIS_PROMPT = (
-    "请结合提供的上下文分析此图片的内容与技术含义。"
-    "用中文简要描述图片中的关键信息，并说明其与上下文的关系。"
-)
-
 
 class AIEngine:
 
@@ -38,14 +28,14 @@ class AIEngine:
     ):
         base = api_base or "https://api.deepseek.com/v1"
         self._config = config or Config(api_key=api_key, api_base=base)
-        self._client = AsyncOpenAI(api_key=api_key, base_url=base)
+        self._client = AsyncOpenAI(api_key=api_key, base_url=base, max_retries=0)
         self._semaphore = semaphore or asyncio.Semaphore(5)
         self._http = httpx.AsyncClient(timeout=30.0)
 
     async def summarize(self, markdown_content: str) -> str:
         truncated = markdown_content[:12000]
         messages = [
-            {"role": "system", "content": SYSTEM_SUMMARY_PROMPT},
+            {"role": "system", "content": self._config.summary_prompt},
             {"role": "user", "content": truncated},
         ]
         return await self._call_with_retry(messages, self._config.text_model)
@@ -73,6 +63,12 @@ class AIEngine:
         return results
 
     async def _analyze_single_image(self, item: ImageItem) -> str:
+        try:
+            return await self._do_analyze_single_image(item)
+        except Exception:
+            return "⚠️ AI 请求失败"
+
+    async def _do_analyze_single_image(self, item: ImageItem) -> str:
         image_data = await self._download_image(item.url)
         if not image_data:
             return "⚠️ 图片下载失败，无法分析"
@@ -81,7 +77,7 @@ class AIEngine:
         b64 = base64.b64encode(image_data).decode("utf-8")
         data_url = f"data:{mime};base64,{b64}"
 
-        prompt = f"{IMAGE_ANALYSIS_PROMPT}\n\n上下文 ({len(item.context)} 字符):\n{item.context}"
+        prompt = f"{self._config.image_analysis_prompt}\n\n上下文 ({len(item.context)} 字符):\n{item.context}"
 
         messages = [
             {
@@ -133,8 +129,11 @@ class AIEngine:
             return None
 
     async def close(self):
-        await self._http.aclose()
-        await self._client.close()
+        for resource in (self._http.aclose, self._client.close):
+            try:
+                await resource()
+            except Exception:
+                pass
 
 
 def _detect_mime_type(data: bytes) -> str:
@@ -144,6 +143,6 @@ def _detect_mime_type(data: bytes) -> str:
         return "image/png"
     if data.startswith(b"GIF87a") or data.startswith(b"GIF89a"):
         return "image/gif"
-    if data.startswith(b"RIFF") and data[8:12] == b"WEBP":
+    if data.startswith(b"RIFF") and len(data) >= 12 and data[8:12] == b"WEBP":
         return "image/webp"
     return "image/jpeg"

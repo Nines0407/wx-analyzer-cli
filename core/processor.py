@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 
 import html2text
 
-IMAGE_MD_RE = re.compile(r"!\[(img_\d+)\]\(([^)]+)\)")
+IMAGE_MD_RE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
 NOISE_PATTERNS = [
     re.compile(r"推荐阅读.*?(?=\n\n|\Z)", re.DOTALL),
     re.compile(r"广告.*?(?=\n\n|\Z)", re.DOTALL),
@@ -14,6 +14,14 @@ NOISE_PATTERNS = [
     re.compile(r"分享到.*?(?=\n\n|\Z)", re.DOTALL),
 ]
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg"}
+VIDEO_ELEMENT_RE = re.compile(
+    r"<(?:video\b|iframe\b[^>]*\bvideo|mp-common-videosnap\b)",
+    re.IGNORECASE,
+)
+VIDEO_URL_RE = re.compile(
+    r'<(?:iframe|mp-common-videosnap)\b[^>]*(?:data-src|src)="([^"]*)"',
+    re.IGNORECASE,
+)
 
 
 @dataclass
@@ -30,7 +38,7 @@ class ContentProcessor:
         self._h.ignore_links = False
         self._h.ignore_images = False
         self._h.body_width = 0
-        self._h.images_to_alt = True
+        self._h.images_to_alt = False
         self._h.protect_links = True
 
     def clean(self, html: str) -> str:
@@ -51,8 +59,8 @@ class ContentProcessor:
 
         def collect_anchor(match):
             anchor_id = f"img_{len(image_anchors)}"
-            url = match.group(1)
-            if url not in seen_urls and _is_image_url(url):
+            url = match.group(2)
+            if url and url not in seen_urls and _is_image_url(url):
                 seen_urls.add(url)
                 image_anchors.append((anchor_id, url))
                 return f"![{anchor_id}]({url})"
@@ -81,8 +89,11 @@ class ContentProcessor:
     def embed_analysis(self, markdown: str, analyses: Dict[str, str]) -> str:
         for anchor_id, analysis in analyses.items():
             pattern = re.compile(rf"!\[{re.escape(anchor_id)}\]\([^)]+\)")
-            replacement = rf"\g<0>\n\n> **AI 图像分析:** {analysis}\n"
-            markdown = pattern.sub(replacement, markdown, count=1)
+
+            def _replacer(match, _analysis=analysis):
+                return f"{match.group(0)}\n\n> **AI 图像分析:** {_analysis}\n"
+
+            markdown = pattern.sub(_replacer, markdown, count=1)
         return markdown
 
     @staticmethod
@@ -90,6 +101,23 @@ class ContentProcessor:
         for pattern in NOISE_PATTERNS:
             text = pattern.sub("", text)
         return text
+
+    @staticmethod
+    def detect_media_from_html(html: str) -> bool:
+        if "<img" in html.lower():
+            return True
+        if VIDEO_ELEMENT_RE.search(html):
+            return True
+        return False
+
+    @staticmethod
+    def extract_video_urls(html: str) -> List[str]:
+        urls: List[str] = []
+        for m in VIDEO_URL_RE.finditer(html):
+            url = m.group(1)
+            if url not in urls:
+                urls.append(url)
+        return urls
 
 
 def _is_image_url(url: str) -> bool:

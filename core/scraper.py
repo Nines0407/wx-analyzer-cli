@@ -86,19 +86,17 @@ class WechatScraper:
             return ""
 
     async def close(self):
-        try:
-            if self._page:
-                await self._page.close()
-            if self._context:
-                await self._context.close()
-            if self._browser:
-                await self._browser.close()
-            if self._playwright:
-                await self._playwright.stop()
-        except Exception:
-            pass
-        finally:
-            self._page = None
-            self._context = None
-            self._browser = None
-            self._playwright = None
+        async def _safe_close(obj, method="close"):
+            try:
+                if obj is not None:
+                    await getattr(obj, method)()
+            except Exception:
+                pass
+        await _safe_close(self._page)
+        await _safe_close(self._context)
+        await _safe_close(self._browser)
+        await _safe_close(self._playwright, "stop")
+        self._page = None
+        self._context = None
+        self._browser = None
+        self._playwright = None
