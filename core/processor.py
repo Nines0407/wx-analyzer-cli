@@ -7,11 +7,11 @@ import html2text
 
 IMAGE_MD_RE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
 NOISE_PATTERNS = [
-    re.compile(r"推荐阅读.*?(?=\n\n|\Z)", re.DOTALL),
-    re.compile(r"广告.*?(?=\n\n|\Z)", re.DOTALL),
-    re.compile(r"关注我们.*?(?=\n\n|\Z)", re.DOTALL),
-    re.compile(r"阅读原文.*?(?=\n\n|\Z)", re.DOTALL),
-    re.compile(r"分享到.*?(?=\n\n|\Z)", re.DOTALL),
+    re.compile(r"推荐阅读.{0,400}?(?=\n\n|\Z)", re.DOTALL),
+    re.compile(r"^\s*广告\b.{0,200}?(?=\n\n|\Z)", re.MULTILINE | re.DOTALL),
+    re.compile(r"关注我们.{0,200}?(?=\n\n|\Z)", re.DOTALL),
+    re.compile(r"阅读原文.{0,200}?(?=\n\n|\Z)", re.DOTALL),
+    re.compile(r"分享到.{0,200}?(?=\n\n|\Z)", re.DOTALL),
 ]
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg"}
 VIDEO_ELEMENT_RE = re.compile(

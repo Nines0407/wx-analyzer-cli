@@ -48,7 +48,10 @@ class WechatScraper:
         await self._ensure_browser()
         await self._page.goto(url, wait_until="networkidle", timeout=30000)
         await self._page.wait_for_timeout(1500)
-        await self._page.evaluate(LAZY_LOAD_JS)
+        try:
+            await self._page.evaluate(LAZY_LOAD_JS)
+        except Exception:
+            pass
         await self._page.wait_for_timeout(500)
         return await self._page.content()
 

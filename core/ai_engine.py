@@ -38,7 +38,10 @@ class AIEngine:
             {"role": "system", "content": self._config.summary_prompt},
             {"role": "user", "content": truncated},
         ]
-        return await self._call_with_retry(messages, self._config.text_model)
+        try:
+            return await self._call_with_retry(messages, self._config.text_model)
+        except Exception:
+            return "⚠️ AI 摘要生成失败"
 
     async def analyze_images(self, images: List[ImageItem]) -> Dict[str, str]:
         results: Dict[str, str] = {}
@@ -129,9 +132,9 @@ class AIEngine:
             return None
 
     async def close(self):
-        for resource in (self._http.aclose, self._client.close):
+        for closer in (self._http.aclose, self._client.close):
             try:
-                await resource()
+                await closer()
             except Exception:
                 pass
 

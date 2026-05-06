@@ -7,7 +7,6 @@
 """
 
 import asyncio
-import sys
 from pathlib import Path
 
 import typer
@@ -15,7 +14,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from core.ai_engine import AIEngine
-from core.config import Config, load_config
+from core.config import load_config
 from core.processor import ContentProcessor
 from core.scraper import WechatScraper
 from core.storage import Storage
@@ -61,8 +60,8 @@ def analyze(
     config = load_config()
     if not config.api_key:
         console.print(
-            "[red]错误: 未设置 DEEPSEEK_API_KEY 环境变量[/red]\n"
-            "[dim]请设置: export DEEPSEEK_API_KEY=your-key[/dim]"
+            "[red]错误: 未设置 API_KEY 或 DEEPSEEK_API_KEY 环境变量[/red]\n"
+            "[dim]请设置: export API_KEY=your-key[/dim]"
         )
         raise typer.Exit(code=1)
 
@@ -153,11 +152,7 @@ def analyze(
                 except Exception:
                     pass
 
-    try:
-        asyncio.run(_run())
-    except KeyboardInterrupt:
-        console.print("\n[dim]用户中断[/dim]")
-        raise typer.Exit(0)
+    asyncio.run(_run())
 
 
 if __name__ == "__main__":
