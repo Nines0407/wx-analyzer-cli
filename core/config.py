@@ -164,8 +164,8 @@ class Config:
     # ── API 配置 ──
     api_key: str = ""
     api_base: str = "https://api.deepseek.com/v1"
-    text_model: str = "deepseek-v4-flash"
-    vision_model: str = "deepseek-vl2"
+    text_model: str = ""
+    vision_model: str = ""
 
     # ── 请求配置 ──
     max_retries: int = 3
@@ -184,8 +184,8 @@ def load_config() -> Config:
     return Config(
         api_key=_getenv("API_KEY") or _getenv("DEEPSEEK_API_KEY"),
         api_base=_getenv("API_BASE") or _getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com/v1"),
-        text_model=_getenv("TEXT_MODEL") or _getenv("DEEPSEEK_TEXT_MODEL", "deepseek-v4-flash"),
-        vision_model=_getenv("VISION_MODEL") or _getenv("DEEPSEEK_VISION_MODEL", "deepseek-vl2"),
+        text_model=_getenv("TEXT_MODEL") or _getenv("DEEPSEEK_TEXT_MODEL", ""),
+        vision_model=_getenv("VISION_MODEL") or _getenv("DEEPSEEK_VISION_MODEL", ""),
         max_retries=_getenv_int("MAX_RETRIES", 3),
         request_timeout=_getenv_float("REQUEST_TIMEOUT", 60.0),
         summary_prompt=_getenv("SUMMARY_PROMPT") or DEFAULT_SUMMARY_PROMPT,

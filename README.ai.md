@@ -53,8 +53,8 @@ deps:
 class Config:
     api_key: str = ""                                    # DEEPSEEK_API_KEY
     api_base: str = "https://api.deepseek.com/v1"        # DEEPSEEK_API_BASE
-    text_model: str = "deepseek-v4-flash"                # DEEPSEEK_TEXT_MODEL
-    vision_model: str = "deepseek-vl2"                    # DEEPSEEK_VISION_MODEL
+    text_model: str = ""                                   # DEEPSEEK_TEXT_MODEL
+    vision_model: str = ""                                   # DEEPSEEK_VISION_MODEL
     max_retries: int = 3                                  # 重试次数
     request_timeout: float = 60.0                         # SDK timeout
     user_agent: str = <Mobile Safari UA>

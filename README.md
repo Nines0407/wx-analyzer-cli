@@ -51,8 +51,8 @@ nano .env
 # ── API 配置 ──
 API_KEY=sk-your-key-here            # 必填：API 密钥
 # API_BASE=https://api.deepseek.com/v1   # API 地址（默认 DeepSeek）
-# TEXT_MODEL=deepseek-v4-flash           # 文本模型
-# VISION_MODEL=deepseek-vl2              # 视觉模型
+TEXT_MODEL=deepseek-v4-flash             # 文本模型
+VISION_MODEL=deepseek-vl2                # 视觉模型
 
 # ── 请求配置 ──
 # MAX_RETRIES=3                          # 最大重试次数
@@ -78,8 +78,8 @@ export API_KEY=sk-your-key-here
 |:---|:---|:---|
 | `API_KEY` | - | **必填**，API 密钥（兼容旧名 `DEEPSEEK_API_KEY`） |
 | `API_BASE` | `https://api.deepseek.com/v1` | API 基础 URL，支持任意 OpenAI 兼容接口 |
-| `TEXT_MODEL` | `deepseek-v4-flash` | 文本摘要模型 |
-| `VISION_MODEL` | `deepseek-vl2` | 视觉分析模型 |
+| `TEXT_MODEL` | 无 | 文本摘要模型 |
+| `VISION_MODEL` | 无 | 视觉分析模型 |
 | `MAX_RETRIES` | `3` | API 调用最大重试次数 |
 | `REQUEST_TIMEOUT` | `60.0` | API 请求超时秒数 |
 | `SUMMARY_PROMPT` | （内置中文提示词） | 文本摘要系统提示词 |
