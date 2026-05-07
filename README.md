@@ -48,15 +48,23 @@ nano .env
 `.env` 文件格式：
 
 ```ini
-# ── API 配置 ──
-API_KEY=sk-your-key-here            # 必填：API 密钥
-# API_BASE=https://api.deepseek.com/v1   # API 地址（默认 DeepSeek）
-TEXT_MODEL=deepseek-v4-flash             # 文本模型
-VISION_MODEL=deepseek-vl2                # 视觉模型
+# ── 通用 API 配置 ──
+API_KEY=sk-your-key-here                     # API 密钥（作为 text/vision 的 fallback）
+# API_BASE=https://api.deepseek.com/v1        # API 地址（默认 DeepSeek）
+
+# ── 模型名称 ──
+TEXT_MODEL=deepseek-v4-flash                 # 文本模型
+VISION_MODEL=deepseek-vl2                    # 视觉模型
+
+# ── 文本/视觉独立 API 配置（可选，不设置则使用通用配置）──
+# TEXT_API_KEY=sk-text-key                   # 文本模型专用 API 密钥
+# TEXT_API_BASE=https://text-api.example.com  # 文本模型专用 API 地址
+# VISION_API_KEY=sk-vision-key               # 视觉模型专用 API 密钥
+# VISION_API_BASE=https://vision-api.example.com  # 视觉模型专用 API 地址
 
 # ── 请求配置 ──
-# MAX_RETRIES=3                          # 最大重试次数
-# REQUEST_TIMEOUT=60.0                   # 请求超时秒数
+# MAX_RETRIES=3                              # 最大重试次数
+# REQUEST_TIMEOUT=60.0                       # 请求超时秒数
 
 # ── Prompt 配置 ──
 # SUMMARY_PROMPT=你是一个专业的技术文章摘要助手...
@@ -76,8 +84,12 @@ export API_KEY=sk-your-key-here
 
 | 变量 | 默认值 | 说明 |
 |:---|:---|:---|
-| `API_KEY` | - | **必填**，API 密钥（兼容旧名 `DEEPSEEK_API_KEY`） |
-| `API_BASE` | `https://api.deepseek.com/v1` | API 基础 URL，支持任意 OpenAI 兼容接口 |
+| `API_KEY` | - | API 密钥（通用 fallback，兼容旧名 `DEEPSEEK_API_KEY`） |
+| `API_BASE` | `https://api.deepseek.com/v1` | API 基础 URL（通用 fallback） |
+| `TEXT_API_KEY` | - | 文本模型专用 API 密钥（可选，不设置则使用 `API_KEY`） |
+| `TEXT_API_BASE` | - | 文本模型专用 API 基础 URL（可选，不设置则使用 `API_BASE`） |
+| `VISION_API_KEY` | - | 视觉模型专用 API 密钥（可选，不设置则使用 `API_KEY`） |
+| `VISION_API_BASE` | - | 视觉模型专用 API 基础 URL（可选，不设置则使用 `API_BASE`） |
 | `TEXT_MODEL` | 无 | 文本摘要模型 |
 | `VISION_MODEL` | 无 | 视觉分析模型 |
 | `MAX_RETRIES` | `3` | API 调用最大重试次数 |

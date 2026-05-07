@@ -58,18 +58,26 @@ def analyze(
         raise typer.Exit(code=1)
 
     config = load_config()
-    if not config.api_key:
+
+    # ── 文本模型验证（所有模式必需）──
+    text_key = config.text_api_key or config.api_key
+    if not text_key:
         console.print(
-            "[red]错误: 未设置 API_KEY 或 DEEPSEEK_API_KEY 环境变量[/red]\n"
-            "[dim]请设置: export API_KEY=your-key[/dim]"
+            "[red]错误: 未设置文本模型 API 密钥[/red]\n"
+            "[dim]请设置 TEXT_API_KEY 或 API_KEY 或 DEEPSEEK_API_KEY[/dim]"
+        )
+        raise typer.Exit(code=1)
+
+    if not config.text_model:
+        console.print(
+            "[red]错误: 未设置文本模型名称[/red]\n"
+            "[dim]请设置: export TEXT_MODEL=model-name[/dim]"
         )
         raise typer.Exit(code=1)
 
     out = output_dir.resolve() if output_dir else DEFAULT_OUTPUT_DIR.resolve()
     semaphore = asyncio.Semaphore(concurrency)
     engine = AIEngine(
-        api_key=config.api_key,
-        api_base=config.api_base,
         config=config,
         semaphore=semaphore,
     )
@@ -104,7 +112,16 @@ def analyze(
 
             # Step 4: AI Analysis
             summary = ""
-            if effective_mode == "deep" and image_anchors:
+            do_deep = effective_mode == "deep" and image_anchors
+            if do_deep:
+                vision_key = config.vision_api_key or config.api_key
+                if not vision_key or not config.vision_model:
+                    console.print(
+                        "[yellow]⚠️  未配置视觉模型，回退为基础摘要模式[/yellow]"
+                    )
+                    do_deep = False
+
+            if do_deep:
                 console.print(
                     f"🖼️  检测到 [bold]{len(image_anchors)}[/bold] 张图片，启动深度分析..."
                 )

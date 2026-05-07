@@ -21,14 +21,18 @@ class AIEngine:
 
     def __init__(
         self,
-        api_key: str,
-        api_base: str | None = None,
-        config: Config | None = None,
+        config: Config,
         semaphore: asyncio.Semaphore | None = None,
     ):
-        base = api_base or "https://api.deepseek.com/v1"
-        self._config = config or Config(api_key=api_key, api_base=base)
-        self._client = AsyncOpenAI(api_key=api_key, base_url=base, max_retries=0)
+        self._config = config
+
+        text_key = config.text_api_key or config.api_key
+        text_base = config.text_api_base or config.api_base or "https://api.deepseek.com/v1"
+        vision_key = config.vision_api_key or config.api_key
+        vision_base = config.vision_api_base or config.api_base or "https://api.deepseek.com/v1"
+
+        self._text_client = AsyncOpenAI(api_key=text_key, base_url=text_base, max_retries=0)
+        self._vision_client = AsyncOpenAI(api_key=vision_key, base_url=vision_base, max_retries=0)
         self._semaphore = semaphore or asyncio.Semaphore(5)
         self._http = httpx.AsyncClient(timeout=30.0)
 
@@ -39,7 +43,9 @@ class AIEngine:
             {"role": "user", "content": truncated},
         ]
         try:
-            return await self._call_with_retry(messages, self._config.text_model)
+            return await self._call_with_retry(
+                messages, self._config.text_model, client=self._text_client
+            )
         except Exception:
             return "⚠️ AI 摘要生成失败"
 
@@ -91,15 +97,22 @@ class AIEngine:
                 ],
             },
         ]
-        return await self._call_with_retry(messages, self._config.vision_model)
+        return await self._call_with_retry(
+            messages, self._config.vision_model, client=self._vision_client
+        )
 
     async def _call_with_retry(
-        self, messages: list, model: str, max_retries: int | None = None
+        self,
+        messages: list,
+        model: str,
+        max_retries: int | None = None,
+        client: AsyncOpenAI | None = None,
     ) -> str:
+        _client = client or self._text_client
         retries = max_retries if max_retries is not None else self._config.max_retries
         for attempt in range(retries):
             try:
-                response = await self._client.chat.completions.create(
+                response = await _client.chat.completions.create(
                     model=model,
                     messages=messages,
                     timeout=self._config.request_timeout,
@@ -132,7 +145,7 @@ class AIEngine:
             return None
 
     async def close(self):
-        for closer in (self._http.aclose, self._client.close):
+        for closer in (self._http.aclose, self._text_client.close, self._vision_client.close):
             try:
                 await closer()
             except Exception:

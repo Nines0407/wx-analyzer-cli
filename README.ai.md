@@ -51,20 +51,26 @@ deps:
 ```python
 @dataclass
 class Config:
-    api_key: str = ""                                    # DEEPSEEK_API_KEY
-    api_base: str = "https://api.deepseek.com/v1"        # DEEPSEEK_API_BASE
-    text_model: str = ""                                   # DEEPSEEK_TEXT_MODEL
-    vision_model: str = ""                                   # DEEPSEEK_VISION_MODEL
-    max_retries: int = 3                                  # 重试次数
-    request_timeout: float = 60.0                         # SDK timeout
+    api_key: str = ""                                    # 通用 API 密钥 (fallback)
+    api_base: str = "https://api.deepseek.com/v1"        # 通用 API 基础 URL (fallback)
+    text_api_key: str = ""                               # 文本模型专用 API 密钥
+    text_api_base: str = ""                              # 文本模型专用 API 基础 URL
+    vision_api_key: str = ""                             # 视觉模型专用 API 密钥
+    vision_api_base: str = ""                            # 视觉模型专用 API 基础 URL
+    text_model: str = ""                                 # 文本模型名称
+    vision_model: str = ""                               # 视觉模型名称
+    max_retries: int = 3                                 # 重试次数
+    request_timeout: float = 60.0                        # SDK timeout
     user_agent: str = <Mobile Safari UA>
 ```
 
 | `load_config()` 从 `.env` 文件及环境变量读取:
-- `DEEPSEEK_API_KEY` (required)
-- `DEEPSEEK_API_BASE` (optional)
-- `DEEPSEEK_TEXT_MODEL` (optional)
-- `DEEPSEEK_VISION_MODEL` (optional)
+- `API_KEY` / `DEEPSEEK_API_KEY` — 通用 API 密钥
+- `API_BASE` / `DEEPSEEK_API_BASE` — 通用 API 基础 URL
+- `TEXT_API_KEY` / `TEXT_API_BASE` — 文本模型专用配置（fallback 到通用配置）
+- `VISION_API_KEY` / `VISION_API_BASE` — 视觉模型专用配置（fallback 到通用配置）
+- `TEXT_MODEL` / `DEEPSEEK_TEXT_MODEL` — 文本模型名称
+- `VISION_MODEL` / `DEEPSEEK_VISION_MODEL` — 视觉模型名称
 
 ---
 
@@ -145,16 +151,16 @@ class ImageItem:
 
 ### 2.5 `core/ai_engine.py` — AI 引擎
 
-**类**: `AIEngine(api_key, api_base?, config?, semaphore?)`
+**类**: `AIEngine(config, semaphore?)`
 
 | 方法 | 返回 | 说明 |
 |:---|:---|:---|
-| `summarize(markdown)` | `str` | DeepSeek-V4-Flash 生成 300 字中文摘要 |
-| `analyze_images(images)` | `dict[anchor_id → analysis]` | 并发调用 DeepSeek-VL2 分析图片 |
-| `_analyze_single_image(item)` | `str` | 单张图片: 下载 → base64 → VL2 API |
-| `_call_with_retry(messages, model, retries?)` | `str` | 统一 API 调用 + 指数退避重试 |
+| `summarize(markdown)` | `str` | 调用文本模型生成摘要（使用文本专用 client） |
+| `analyze_images(images)` | `dict[anchor_id → analysis]` | 并发调用视觉模型分析图片（使用视觉专用 client） |
+| `_analyze_single_image(item)` | `str` | 单张图片: 下载 → base64 → 视觉模型 API |
+| `_call_with_retry(messages, model, retries?, client?)` | `str` | 统一 API 调用 + 指数退避重试 |
 | `_download_image(url)` | `bytes | None` | HTTP 下载图片二进制 |
-| `close()` | `None` | 关闭 httpx 和 openai 客户端 |
+| `close()` | `None` | 关闭 httpx 和两个 openai 客户端 |
 
 **OpenAI SDK 调用格式**:
 
