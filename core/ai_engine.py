@@ -1,10 +1,12 @@
 import asyncio
 import base64
+import io as io_module
 import random
 from typing import Dict, List, Optional
 
 import httpx
 from openai import AsyncOpenAI
+from PIL import Image
 from rich.progress import (
     BarColumn,
     Progress,
@@ -82,9 +84,9 @@ class AIEngine:
         if not image_data:
             return "⚠️ 图片下载失败，无法分析"
 
-        mime = _detect_mime_type(image_data)
+        image_data = _normalize_image(image_data)
         b64 = base64.b64encode(image_data).decode("utf-8")
-        data_url = f"data:{mime};base64,{b64}"
+        data_url = f"data:image/png;base64,{b64}"
 
         prompt = f"{self._config.image_analysis_prompt}\n\n上下文 ({len(item.context)} 字符):\n{item.context}"
 
@@ -92,8 +94,8 @@ class AIEngine:
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": prompt},
                     {"type": "image_url", "image_url": {"url": data_url}},
+                    {"type": "text", "text": prompt},
                 ],
             },
         ]
@@ -137,10 +139,17 @@ class AIEngine:
         return "⚠️ AI 请求失败"
 
     async def _download_image(self, url: str) -> Optional[bytes]:
+        headers = {"Referer": "https://mp.weixin.qq.com/"}
         try:
-            resp = await self._http.get(url, follow_redirects=True)
+            resp = await self._http.get(url, follow_redirects=True, headers=headers)
             resp.raise_for_status()
-            return resp.content
+            content_type = resp.headers.get("content-type", "").lower()
+            if not any(t in content_type for t in ("image/", "octet-stream")):
+                return None
+            content = resp.content
+            if not _detect_mime_type(content):
+                return None
+            return content
         except Exception:
             return None
 
@@ -161,4 +170,21 @@ def _detect_mime_type(data: bytes) -> str:
         return "image/gif"
     if data.startswith(b"RIFF") and len(data) >= 12 and data[8:12] == b"WEBP":
         return "image/webp"
-    return "image/jpeg"
+    return ""
+
+
+def _normalize_image(data: bytes) -> bytes:
+    mime = _detect_mime_type(data)
+    if mime in ("image/png", ""):
+        return data
+    try:
+        img = Image.open(io_module.BytesIO(data))
+        if img.mode in ("RGBA", "LA", "P"):
+            img = img.convert("RGBA")
+        else:
+            img = img.convert("RGB")
+        buf = io_module.BytesIO()
+        img.save(buf, format="PNG")
+        return buf.getvalue()
+    except Exception:
+        return data

@@ -7,7 +7,11 @@
 """
 
 import asyncio
+import io
+import sys
 from pathlib import Path
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 import typer
 from rich.console import Console

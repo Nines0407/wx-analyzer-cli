@@ -112,8 +112,9 @@ class Storage:
     async def _download_image(
         self, url: str, dest_dir: Path, anchor_id: str
     ) -> Optional[Path]:
+        headers = {"Referer": "https://mp.weixin.qq.com/"}
         try:
-            resp = await self._http.get(url)
+            resp = await self._http.get(url, headers=headers)
             resp.raise_for_status()
             ext = _guess_extension(resp.headers.get("content-type", ""), url)
             filename = f"{anchor_id}{ext}"
