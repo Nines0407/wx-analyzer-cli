@@ -46,8 +46,8 @@ class WechatScraper:
 
     async def scrape(self, url: str) -> str:
         await self._ensure_browser()
-        await self._page.goto(url, wait_until="networkidle", timeout=30000)
-        await self._page.wait_for_timeout(1500)
+        await self._page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        await self._page.wait_for_timeout(3000)
         try:
             await self._page.evaluate(LAZY_LOAD_JS)
         except Exception:
