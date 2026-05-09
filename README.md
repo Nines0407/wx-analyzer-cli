@@ -100,7 +100,7 @@ export API_KEY=sk-your-key-here
 
 ## 使用方法
 
-安装后通过 `wx-analyzer` 命令使用，也可在项目根目录直接使用 `python -m main`：
+安装后通过 `wx-analyzer` 命令使用，也可在项目根目录直接使用 `python main.py`：
 
 ### 自动模式（默认，推荐）
 
@@ -120,6 +120,21 @@ wx-analyzer "https://mp.weixin.qq.com/s/xxxx" --mode deep
 wx-analyzer "https://mp.weixin.qq.com/s/xxxx" --mode base
 ```
 
+### 批量分析
+
+从文件读取 URL 列表，并发处理多篇文章：
+
+```bash
+# urls.txt 每行一个 URL，# 开头的行为注释
+wx-analyzer --file urls.txt
+
+# 3 篇文章并行处理
+wx-analyzer --file urls.txt --workers 3
+
+# 批量 + 基础模式
+wx-analyzer --file urls.txt --mode base -w 5
+```
+
 ### 自定义参数
 
 ```bash
@@ -131,9 +146,11 @@ wx-analyzer "https://mp.weixin.qq.com/s/xxxx" \
 
 | 参数 | 简写 | 默认值 | 说明 |
 |:---|:---|:---|:---|
+| `--file` | `-f` | - | URL 列表文件（每行一个，`#` 跳过） |
 | `--mode` | `-m` | `auto` | 分析模式：`auto` / `base` / `deep` |
 | `--output` | `-o` | `./output/` | 输出根目录 |
-| `--concurrency` | `-c` | `5` | Deep 模式图片并发分析数 (1-20) |
+| `--concurrency` | `-c` | `5` | 单篇文章内图片并发分析数 (1-20) |
+| `--workers` | `-w` | `1` | 并行处理的文章数 (1-10) |
 
 ## 输出结构
 
@@ -142,25 +159,30 @@ wx-analyzer "https://mp.weixin.qq.com/s/xxxx" \
 ```
 output/
 └── 微信小程序性能优化实战_a1b2c3d4/
-    ├── index.md              # 结构化 Markdown 报告
+    ├── summary.md           # AI 摘要 + 元数据
+    ├── article.md           # 原文（含 AI 图片分析嵌入）
     └── images/
-        ├── img_0.jpg          # 下载的图片（本地引用）
+        ├── img_0.jpg        # 下载的图片（本地引用）
         └── img_1.png
 ```
 
-`index.md` 文件包含以下部分：
+`summary.md` 包含以下部分：
 
 1. **文章标题**
-2. **AI 摘要** — 全文摘要（~300 字）
-3. **原文内容** — 带有 AI 图片分析注释的正文（图片引用已替换为本地路径）
-4. **视频列表** — 若检测到视频嵌入，列出视频链接
-5. **元数据** — 源链接、作者、发布日期、分析时间
+2. **AI 摘要** — 全文深度摘要
+3. **元数据** — 源链接、作者、发布日期、分析时间
+
+`article.md` 包含以下部分：
+
+1. **文章标题**
+2. **原文内容** — 带有 AI 图片分析注释的正文（图片引用已替换为本地路径）
+3. **视频列表** — 若检测到视频嵌入，列出视频链接
 
 ## 项目结构
 
 ```
 wx-analyzer-cli/
-├── main.py              # Typer CLI 入口，命令路由与生命周期管理
+├── main.py              # Typer CLI 入口，单篇/批量分析调度与并发控制
 ├── pyproject.toml        # 项目元数据与依赖声明
 ├── core/
 │   ├── config.py         # 配置管理（环境变量 → Config dataclass，含 Linux 平台检测）
@@ -175,12 +197,12 @@ wx-analyzer-cli/
 ## 执行流程
 
 ```
-用户输入 URL
+用户输入 URL / --file 批量URL
     │
     ▼
 WechatScraper.scrape()
   ├── 启动无头 Chromium（可配置 User-Agent + Linux 适配 args）
-  ├── 等待 networkidle + 额外延迟
+  ├── 等待 domcontentloaded + 延迟缓冲
   ├── 注入 JS 修复 data-src → src
   └── 返回完整 HTML
     │
@@ -223,7 +245,7 @@ Storage.save()
   ├── 下载图片至 images/ 子目录
   ├── 替换 Markdown 中图片引用为本地路径
   ├── 追加视频链接列表
-  └── 写入 index.md
+  └── 写入 summary.md + article.md
 ```
 
 ## 自定义模型示例
