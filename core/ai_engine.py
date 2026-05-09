@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import io as io_module
+import logging
 import random
 from typing import Dict, List, Optional
 
@@ -17,6 +18,9 @@ from rich.progress import (
 
 from core.config import Config
 from core.processor import ImageItem
+from core.security import is_safe_url
+
+logger = logging.getLogger(__name__)
 
 
 class AIEngine:
@@ -77,6 +81,7 @@ class AIEngine:
         try:
             return await self._do_analyze_single_image(item)
         except Exception:
+            logger.warning("AI vision analysis failed for %s", item.url, exc_info=True)
             return "⚠️ AI 请求失败"
 
     async def _do_analyze_single_image(self, item: ImageItem) -> str:
@@ -139,6 +144,8 @@ class AIEngine:
         return "⚠️ AI 请求失败"
 
     async def _download_image(self, url: str) -> Optional[bytes]:
+        if not is_safe_url(url):
+            return None
         headers = {"Referer": "https://mp.weixin.qq.com/"}
         try:
             resp = await self._http.get(url, follow_redirects=True, headers=headers)
@@ -150,7 +157,10 @@ class AIEngine:
             if not _detect_mime_type(content):
                 return None
             return content
+        except httpx.HTTPError:
+            return None
         except Exception:
+            logger.warning("Unexpected error downloading image from %s", url, exc_info=True)
             return None
 
     async def close(self):
@@ -158,7 +168,7 @@ class AIEngine:
             try:
                 await closer()
             except Exception:
-                pass
+                logger.debug("Error during %s.close()", closer.__self__.__class__.__name__, exc_info=True)
 
 
 def _detect_mime_type(data: bytes) -> str:

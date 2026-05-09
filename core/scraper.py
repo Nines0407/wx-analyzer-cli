@@ -1,6 +1,10 @@
+import logging
+
 from playwright.async_api import async_playwright
 
 from core.config import Config, load_config
+
+logger = logging.getLogger(__name__)
 
 LAZY_LOAD_JS = """
 () => {
@@ -51,7 +55,7 @@ class WechatScraper:
         try:
             await self._page.evaluate(LAZY_LOAD_JS)
         except Exception:
-            pass
+            logger.debug("Lazy-load JS injection skipped", exc_info=True)
         await self._page.wait_for_timeout(500)
         return await self._page.content()
 
@@ -64,6 +68,7 @@ class WechatScraper:
             )
             return title or "Unknown"
         except Exception:
+            logger.debug("Failed to extract title from %s", self._page.url, exc_info=True)
             return "Unknown"
 
     async def get_author(self) -> str:
@@ -75,6 +80,7 @@ class WechatScraper:
             )
             return author
         except Exception:
+            logger.debug("Failed to extract author", exc_info=True)
             return ""
 
     async def get_publish_date(self) -> str:
@@ -86,6 +92,7 @@ class WechatScraper:
             )
             return date
         except Exception:
+            logger.debug("Failed to extract publish_date", exc_info=True)
             return ""
 
     async def close(self):
@@ -94,7 +101,7 @@ class WechatScraper:
                 if obj is not None:
                     await getattr(obj, method)()
             except Exception:
-                pass
+                logger.debug("Error during %s.%s()", type(obj).__name__, method, exc_info=True)
         await _safe_close(self._page)
         await _safe_close(self._context)
         await _safe_close(self._browser)

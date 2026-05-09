@@ -7,20 +7,28 @@
 
 import asyncio
 import io
+import logging
 import sys
 from pathlib import Path
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+logger = logging.getLogger(__name__)
 
-import typer
-from rich.console import Console
-from rich.panel import Panel
+if sys.stdout.encoding.upper() != "UTF-8":
+    try:
+        sys.stdout = io.TextIOWrapper(
+            sys.stdout.buffer, encoding="utf-8", errors="replace"
+        )
+    except (AttributeError, ValueError):
+        pass
 
-from core.ai_engine import AIEngine
-from core.config import Config, load_config
-from core.processor import ContentProcessor
-from core.scraper import WechatScraper
-from core.storage import Storage
+import typer  # noqa: E402
+from rich.console import Console  # noqa: E402
+
+from core.ai_engine import AIEngine  # noqa: E402
+from core.config import Config, load_config  # noqa: E402
+from core.processor import ContentProcessor  # noqa: E402
+from core.scraper import WechatScraper  # noqa: E402
+from core.storage import Storage  # noqa: E402
 
 app = typer.Typer(help="微信公众号文章分析工具 🛠️")
 console = Console()
@@ -111,12 +119,13 @@ async def _process_one(
 
     except Exception as exc:
         console.print(f"[red]❌ {label} 失败: {exc}[/red]")
+        logger.warning("Article processing failed for %s", url, exc_info=True)
     finally:
         for closer in (engine.close, scraper.close, storage.close):
             try:
                 await closer()
             except Exception:
-                pass
+                logger.debug("Error during resource cleanup", exc_info=True)
 
 
 @app.command()

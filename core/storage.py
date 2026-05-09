@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -8,6 +9,9 @@ from urllib.parse import urlparse
 import httpx
 
 from core.processor import IMAGE_EXTENSIONS
+from core.security import is_safe_url
+
+logger = logging.getLogger(__name__)
 
 METADATA_TEMPLATE = """> **源链接:** {source_url}
 > **作者:** {author}
@@ -118,6 +122,8 @@ class Storage:
     async def _download_image(
         self, url: str, dest_dir: Path, anchor_id: str
     ) -> Optional[Path]:
+        if not is_safe_url(url):
+            return None
         headers = {"Referer": "https://mp.weixin.qq.com/"}
         try:
             resp = await self._http.get(url, headers=headers)
@@ -127,7 +133,10 @@ class Storage:
             filepath = dest_dir / filename
             filepath.write_bytes(resp.content)
             return filepath
+        except httpx.HTTPError:
+            return None
         except Exception:
+            logger.warning("Unexpected error downloading image from %s", url, exc_info=True)
             return None
 
     async def close(self):
