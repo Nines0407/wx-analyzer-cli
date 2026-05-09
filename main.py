@@ -149,7 +149,7 @@ def analyze(
                 "publish_date": await scraper.get_publish_date(),
             }
             console.print("💾 下载媒体资源并保存...")
-            filepath = await storage.save(
+            article_dir = await storage.save(
                 url,
                 title=title,
                 summary=summary,
@@ -160,7 +160,8 @@ def analyze(
             )
 
             console.print(
-                f"💾 文章已保存至: [bold cyan]{filepath}[/bold cyan]"
+                f"💾 AI 摘要: [bold cyan]{article_dir / 'summary.md'}[/bold cyan]\n"
+                f"   原文内容: [bold cyan]{article_dir / 'article.md'}[/bold cyan]"
             )
             console.print(
                 Panel(summary or "(无摘要)", title="[bold]AI 摘要[/bold]", border_style="green")

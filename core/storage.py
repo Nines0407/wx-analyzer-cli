@@ -96,18 +96,24 @@ class Storage:
             analyzed_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         )
 
-        file_content = (
+        summary_content = (
             f"# {title}\n\n"
             f"---\n\n"
             f"## AI 摘要\n\n{summary}\n\n"
             f"---\n\n"
-            f"## 原文内容\n\n{content}\n\n"
-            f"---\n\n"
             f"## 元数据\n\n{meta_str}\n"
         )
-        filepath = article_dir / "index.md"
-        filepath.write_text(file_content, encoding="utf-8")
-        return filepath
+        summary_path = article_dir / "summary.md"
+        summary_path.write_text(summary_content, encoding="utf-8")
+
+        article_content = (
+            f"# {title}\n\n"
+            f"{content}\n"
+        )
+        article_path = article_dir / "article.md"
+        article_path.write_text(article_content, encoding="utf-8")
+
+        return article_dir
 
     async def _download_image(
         self, url: str, dest_dir: Path, anchor_id: str
